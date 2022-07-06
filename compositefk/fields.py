@@ -9,6 +9,7 @@ from functools import wraps
 
 from django.core import checks
 from django.core.exceptions import FieldDoesNotExist
+from django.db.models import DO_NOTHING
 from django.db.models.fields.related import ForeignObject
 from django.db.models.fields.related_descriptors import ReverseOneToOneDescriptor
 from django.db.models.sql.where import WhereNode, AND
@@ -38,7 +39,7 @@ class CompositeForeignKey(ForeignObject):
         # a list of tuple : (fieldnaem, value) . if fielname = value, then the field react as if fieldnaem_id = None
         self._raw_fields = self.compute_to_fields(to_fields)
         # hiro nakamura should have said «very bad guy. you are vilain»
-        if "on_delete" in kwargs:
+        if "on_delete" in kwargs and kwargs["on_delete"] is not DO_NOTHING:
             kwargs["on_delete"] = self.override_on_delete(kwargs["on_delete"])
 
         kwargs["to_fields"], kwargs["from_fields"] = zip(*(
@@ -188,7 +189,7 @@ class CompositeForeignKey(ForeignObject):
     def deconstruct(self):
         name, path, args, kwargs = super(CompositeForeignKey, self).deconstruct()
         del kwargs["from_fields"]
-        if "on_delete" in kwargs:
+        if "on_delete" in kwargs and kwargs["on_delete"] is not DO_NOTHING:
             kwargs["on_delete"] = kwargs["on_delete"]._original_fn
         kwargs["to_fields"] = self._raw_fields
         kwargs["null_if_equal"] = self.null_if_equal
