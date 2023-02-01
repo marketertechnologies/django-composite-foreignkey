@@ -47,6 +47,9 @@ class CompositeForeignKey(ForeignObject):
             for k, v in self._raw_fields.items()
             if v.is_local_field
         ))
+
+        self.soft_delete_field = kwargs.pop("soft_delete_field", None)
+
         super(CompositeForeignKey, self).__init__(to, **kwargs)
 
     def override_on_delete(self, original):
@@ -207,6 +210,13 @@ class CompositeForeignKey(ForeignObject):
             lookup = local.get_lookup(self, self.related_model._meta.get_field(remote), alias)
             if lookup:
                 constraint.add(lookup, AND)
+
+        if self.soft_delete_field is not None:
+            soft_delete_field = self.related_model._meta.get_field(self.soft_delete_field)
+            lookup_class = soft_delete_field.get_lookup('isnull')
+            lookup = lookup_class(soft_delete_field.get_col(alias), True)
+            constraint.add(lookup, AND)
+
         if constraint.children:
             return constraint
         else:
