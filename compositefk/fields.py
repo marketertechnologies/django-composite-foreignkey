@@ -201,7 +201,7 @@ class CompositeForeignKey(ForeignObject):
             if isinstance(v, RawFieldValue)
         }
 
-    def get_extra_restriction(self, where_class, alias):
+    def get_extra_restriction(self, where_class, alias, related_alias=None):
         constraint = WhereNode(connector=AND)
         for remote, local in self._raw_fields.items():
             lookup = local.get_lookup(self, self.related_model._meta.get_field(remote), alias)
