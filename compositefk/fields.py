@@ -13,7 +13,7 @@ from django.db.models import DO_NOTHING
 from django.db.models.fields.related import ForeignObject
 from django.db.models.fields.related_descriptors import ReverseOneToOneDescriptor
 from django.db.models.sql.where import WhereNode, AND
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from compositefk.related_descriptors import CompositeForwardManyToOneDescriptor
 
