@@ -204,13 +204,13 @@ class CompositeForeignKey(ForeignObject):
         }
 
     def get_extra_restriction(self, alias, related_alias):
-        where = WhereNode(connector=AND)
+        where = WhereNode()
         for remote_name, value in self._raw_fields.items():
             if isinstance(value, RawFieldValue):
                 rhs = value.value
             else:
                 local_field = self.model._meta.get_field(value.value)
-                rhs = Col(alias, local_field)
+                rhs = Col(self.model._meta.db_table, local_field)
             remote_field = self.remote_field.model._meta.get_field(remote_name)
             lhs = Col(alias, remote_field)
             where.add(Exact(lhs, rhs), AND)
