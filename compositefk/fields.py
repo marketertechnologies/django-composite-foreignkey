@@ -12,8 +12,10 @@ from django.core.exceptions import FieldDoesNotExist
 from django.db.models import DO_NOTHING
 from django.db.models.fields.related import ForeignObject
 from django.db.models.fields.related_descriptors import ReverseOneToOneDescriptor
-from django.db.models.sql.where import WhereNode, AND
 from django.utils.translation import gettext_lazy as _
+from django.db.models.expressions import Col
+from django.db.models.lookups import Exact
+from django.db.models.sql.where import WhereNode, AND
 
 from compositefk.related_descriptors import CompositeForwardManyToOneDescriptor
 
@@ -201,16 +203,18 @@ class CompositeForeignKey(ForeignObject):
             if isinstance(v, RawFieldValue)
         }
 
-    def get_extra_restriction(self, where_class, alias, related_alias=None):
-        constraint = WhereNode(connector=AND)
-        for remote, local in self._raw_fields.items():
-            lookup = local.get_lookup(self, self.related_model._meta.get_field(remote), alias)
-            if lookup:
-                constraint.add(lookup, AND)
-        if constraint.children:
-            return constraint
-        else:
-            return None
+    def get_extra_restriction(self, alias, related_alias):
+        where = WhereNode(connector=AND)
+        for remote_name, value in self._raw_fields.items():
+            if isinstance(value, RawFieldValue):
+                rhs = value.value
+            else:
+                local_field = self.model._meta.get_field(value.value)
+                rhs = Col(alias, local_field)
+            remote_field = self.remote_field.model._meta.get_field(remote_name)
+            lhs = Col(alias, remote_field)
+            where.add(Exact(lhs, rhs), AND)
+        return where
 
     def compute_to_fields(self, to_fields):
         """
